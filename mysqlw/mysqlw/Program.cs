@@ -1,4 +1,5 @@
 ﻿using MySql.Data.MySqlClient;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace mysqlw
 {
@@ -10,19 +11,34 @@ namespace mysqlw
             var user = args[1];
             var password = args[2];
             var db = args[3];
-
+            var output = args[4];
 
             Console.WriteLine($"{host} {user} {password} {db}");
+            Console.WriteLine($"{output}");
+
+            if (!Directory.Exists(output))
+            {
+                Directory.CreateDirectory(output);
+            }
+
             using (var conn = GetConnection(host, 3306, db, user, password))
             {
                 var views = GetViews(conn,db);
-                foreach (var view in views) { 
-                    Console.WriteLine($"View {view.name} {view.definition}");
+
+                // Використання StreamWriter для запису у файл
+                using (StreamWriter writer = new StreamWriter(output + "_views.sql"))
+                {
+                    foreach (var view in views)
+                    {
+                        writer.WriteLine($"CREATE VIEW {view.name} AS ");
+                        writer.WriteLine($"{view.definition};");
+                        writer.WriteLine();
+                    }
                 }
                 conn.Close();
             }
 
-            Console.Read();
+            Console.WriteLine(".................. DONE ...............");
         }
         static MySqlConnection GetConnection(string host, int port, string database, string username, string password)
         {
